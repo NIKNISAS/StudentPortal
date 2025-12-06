@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Attendance</title>
+  <link rel="icon" type="image/png" href="images/uitmlogo.png" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+  <style>
+    /* ========================
+       FULL RESET - START FRESH
+       ======================== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      height: 100%;
+      overflow-y: scroll;
+      overflow-x: hidden;
+    }
+
+    body {
+      min-height: 100%;
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #e0d7f8 0%, #f0f4ff 50%, #e6f0ff 100%);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    /* Dark mode styles */
+    body.dark-mode {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      color: #e0e0e0;
+    }
+    body.dark-mode .navbar,
+    body.dark-mode .navbar-mobile { background: #1f2937; }
+    body.dark-mode .navbar span,
+    body.dark-mode .navbar-mobile span { color: #ffffff !important; }
+    body.dark-mode .card { background: rgba(31, 41, 55, 0.8); color: #e0e0e0; }
+    body.dark-mode .card h1,
+    body.dark-mode .card h2 { color: #ffffff; }
+    body.dark-mode .text-purple-700,
+    body.dark-mode .text-gray-700 { color: #ffffff !important; }
+    body.dark-mode th { background: rgba(124,58,237,0.3); color: #c084fc; }
+    body.dark-mode td { color: #e0e0e0; }
+    body.dark-mode tbody tr:hover { background-color: rgba(124,58,237,0.15) !important; }
+    body.dark-mode th, body.dark-mode td { border-bottom-color: #374151; }
+    body.dark-mode .nav-link { color: #d1d5db; }
+    body.dark-mode .nav-link:hover { background-color: rgba(124,58,237,0.2); color: #c084fc; }
+    body.dark-mode .nav-link.active { background-color: rgba(124,58,237,0.3); color: #c084fc; }
+    body.dark-mode #mobileMenu { background: #1f2937; }
+    body.dark-mode #mobileMenu .text-gray-700 { color: #d1d5db !important; }
+    body.dark-mode #mobileMenu .border-gray-200 { border-color: #374151; }
+    body.dark-mode footer { background: #111827; }
+    body.dark-mode h1 { color: #c084fc !important; }
+    body.dark-mode .attendance-item { background: rgba(31, 41, 55, 0.5); }
+    body.dark-mode .attendance-item-header { color: #c084fc; }
+
+    /* Decorative shapes */
+    .decor-shape {
+      position: fixed;
+      filter: blur(60px) saturate(120%);
+      opacity: 0.4;
+      z-index: 0;
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    .decor-shape1 {
+      width: 420px;
+      height: 420px;
+      top: -80px;
+      left: -120px;
+      background: #c084fc;
+    }
+    .decor-shape2 {
+      width: 360px;
+      height: 360px;
+      top: 80px;
+      right: -140px;
+      background: #fad660;
+      opacity: 0.35;
+    }
+    .decor-shape3 {
+      width: 220px;
+      height: 220px;
+      bottom: -60px;
+      left: 20%;
+      background: #fb7171;
+      opacity: 0.25;
+    }
+
+    /* Cards */
+    .card {
+      background: rgba(255,255,255,0.75);
+      backdrop-filter: blur(12px) saturate(120%);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+      transition: transform 0.2s, box-shadow 0.2s;
+      z-index: 10;
+      position: relative;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 25px rgba(0,0,0,0.15);
+    }
+
+    /* Navbar */
+    .navbar {
+      z-index: 20;
+      position: relative;
+      box-shadow: 0 6px 20px rgba(124,58,237,0.15);
+    }
+    .navbar::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, rgba(124,58,237,0.6), rgba(191,132,248,0.6));
+      filter: blur(8px);
+      border-radius: 2px;
+    }
+
+    /* Nav links */
+    .nav-link {
+      position: relative;
+      padding: 6px 14px;
+      border-radius: 12px;
+      font-weight: 700;
+      color: #4a5568;
+      transition: all 0.3s ease;
+      display: inline-block;
+      text-decoration: none;
+    }
+    .nav-link:hover {
+      background-color: rgba(124,58,237,0.1);
+      color: #7c3aed;
+      box-shadow: 0 2px 8px rgba(124,58,237,0.3);
+    }
+    .nav-link.active {
+      background-color: rgba(124,58,237,0.15);
+      color: #7c3aed;
+      font-weight: 700;
+      box-shadow: 0 0 12px rgba(124,58,237,0.4);
+    }
+    .nav-link.active::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      bottom: -3px;
+      width: 100%;
+      height: 3px;
+      background: #7c3aed;
+      border-radius: 2px;
+      box-shadow: 0 0 8px rgba(124,58,237,0.5);
+    }
+    .nav-link.logout {
+      color: #ef4444;
+    }
+    .nav-link.logout:hover {
+      background-color: rgba(239,68,68,0.1);
+      color: #ef4444;
+      box-shadow: 0 2px 8px rgba(239,68,68,0.3);
+    }
+
+    /* Mobile navbar */
+    .navbar-mobile {
+      z-index: 30;
+    }
+    #mobileMenu a {
+      padding: 8px 12px;
+      border-radius: 10px;
+    }
+
+    /* Main container */
+    .page-container {
+      flex: 1 0 auto;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      width: 100%;
+    }
+
+    main {
+      flex: 1 1 auto;
+      padding: 2rem 1rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    @media (min-width: 640px) {
+      main {
+        padding: 2rem 1.5rem;
+      }
+    }
+
+    /* Footer */
+    footer {
+      flex-shrink: 0;
+      margin-top: auto;
+      width: 100%;
+    }
+
+    /* Container */
+    .container {
+      max-width: 1280px;
+      margin-left: auto;
+      margin-right: auto;
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+
+    @media (min-width: 640px) {
+      .container {
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+      }
+    }
+
+    /* Table styles - Desktop only */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+    th, td {
+      padding: 0.5rem;
+      text-align: center;
+      border-bottom: 1px solid #ddd;
+      font-size: 0.8rem;
+    }
+    th {
+      background: #ede6ff;
+      color: #7c3aed;
+      font-weight: 600;
+    }
+    tbody tr:hover {
+      background-color: rgba(124,58,237,0.05);
+    }
+
+    @media (min-width: 768px) {
+      th, td {
+        padding: 0.75rem 0.5rem;
+        font-size: 1rem;
+      }
+    }
+
+    /* Hide table on mobile */
+    @media (max-width: 767px) {
+      .desktop-table {
+        display: none;
+      }
+      
+      main {
+        padding-top: 80px !important;
+      }
+    }
+
+    /* Mobile card view for attendance */
+    .mobile-attendance {
+      display: none;
+    }
+
+    @media (max-width: 767px) {
+      .mobile-attendance {
+        display: block;
+      }
+    }
+
+    .attendance-item {
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 12px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .attendance-item-header {
+      font-weight: 700;
+      color: #7c3aed;
+      font-size: 0.875rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .attendance-item-title {
+      font-weight: 600;
+      font-size: 0.95rem;
+      margin-bottom: 0.75rem;
+      color: #374151;
+    }
+
+    .attendance-item-details {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.5rem;
+      text-align: center;
+    }
+
+    .attendance-detail {
+      background: rgba(124, 58, 237, 0.05);
+      padding: 0.5rem;
+      border-radius: 8px;
+    }
+
+    .attendance-detail-label {
+      font-size: 0.7rem;
+      color: #6b7280;
+      margin-bottom: 0.25rem;
+    }
+
+    .attendance-detail-value {
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: #7c3aed;
+    }
+
+    .attendance-percentage {
+      margin-top: 0.75rem;
+      text-align: center;
+      padding: 0.75rem;
+      background: linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(191, 132, 248, 0.1));
+      border-radius: 8px;
+      border: 2px solid rgba(124, 58, 237, 0.2);
+    }
+
+    .attendance-percentage-value {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #7c3aed;
+    }
+
+    .attendance-percentage-label {
+      font-size: 0.75rem;
+      color: #6b7280;
+      margin-top: 0.25rem;
+    }
+
+    /* Chart container styles */
+    .chart-container {
+      position: relative;
+      width: 100%;
+      min-height: 300px;
+    }
+
+    @media (max-width: 767px) {
+      .chart-container {
+        min-height: 250px;
+      }
+    }
+
+    @media (min-width: 1024px) {
+      .chart-container {
+        min-height: 400px;
+      }
+    }
+
+    /* Footer grid */
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (min-width: 640px) {
+      .footer-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (min-width: 768px) {
+      .footer-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Decorative shapes -->
+  <div class="decor-shape decor-shape1"></div>
+  <div class="decor-shape decor-shape2"></div>
+  <div class="decor-shape decor-shape3"></div>
+
+  <!-- MOBILE HEADER -->
+  <nav class="navbar-mobile bg-white py-3 fixed top-0 left-0 right-0 shadow-md md:hidden">
+    <div class="flex items-center justify-between px-4">
+      <div class="flex items-center gap-2">
+        <img src="images/uitmlogo.png" alt="UITM Logo" class="w-9 h-9 rounded-full" />
+        <span class="font-bold text-purple-700 text-sm sm:text-base whitespace-nowrap">Student Portal</span>
+      </div>
+      <button id="mobileMenuBtn" class="text-purple-700 focus:outline-none p-2">
+        <i class="fas fa-bars fa-lg"></i>
+      </button>
+    </div>
+  </nav>
+
+  <!-- MOBILE MENU -->
+  <div id="mobileMenu" class="fixed top-[60px] left-0 right-0 bg-white shadow-md hidden flex-col space-y-1 px-4 py-4 md:hidden z-40">
+    <a href="dashboard.html" class="nav-link block">Dashboard</a>
+    <a href="courses.html" class="nav-link block">Courses</a>
+    <a href="grades.html" class="nav-link block">Grades</a>
+    <a href="assignment.html" class="nav-link block">Assignments</a>
+    <a href="attendance.html" class="nav-link active block">Attendance</a>
+    <a href="profile.html" class="nav-link block">Profile</a>
+    <a href="index.html" class="nav-link logout block">Logout</a>
+    <div class="flex items-center justify-between pt-2 border-t border-gray-200">
+      <span class="text-sm font-medium text-gray-700">Dark Mode</span>
+      <label class="relative inline-flex items-center cursor-pointer">
+        <input type="checkbox" id="darkModeToggleMobile" class="sr-only peer">
+        <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+        <span class="ml-2 text-sm" id="modeLabelMobile">
+          <i class="fas fa-sun text-yellow-500"></i>
+        </span>
+      </label>
+    </div>
+  </div>
+
+  <!-- DESKTOP HEADER -->
+  <nav class="navbar bg-white px-6 py-4 justify-between items-center rounded-b-2xl relative hidden md:flex">
+    <div class="flex items-center space-x-4">
+      <img src="images/uitmlogo.png" alt="UITM Logo" class="w-10 h-10 rounded-full">
+      <span class="font-bold text-lg text-purple-700">Student Portal</span>
+    </div>
+    <div class="flex space-x-4 items-center">
+      <a href="dashboard.html" class="nav-link">Dashboard</a>
+      <a href="courses.html" class="nav-link">Courses</a>
+      <a href="grades.html" class="nav-link">Grades</a>
+      <a href="assignment.html" class="nav-link">Assignments</a>
+      <a href="attendance.html" class="nav-link active">Attendance</a>
+      <a href="profile.html" class="nav-link">Profile</a>
+      <a href="index.html" class="nav-link logout">Logout</a>
+      <div class="flex items-center">
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" id="darkModeToggle" class="sr-only peer">
+          <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+          <span class="ml-2 text-sm font-medium text-gray-700" id="modeLabel">
+            <i class="fas fa-sun text-yellow-500"></i>
+          </span>
+        </label>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Page Container -->
+  <div class="page-container">
+    <!-- Main Content -->
+    <main style="padding-top: 2rem;">
+      <div class="container">
+        <!-- Page Header -->
+        <div style="margin-bottom: 1.5rem; position: relative; z-index: 10;">
+          <h1 class="text-3xl font-bold text-purple-700">Attendance Overview - Semester 4</h1>
+        </div>
+
+        <!-- Attendance Table - Desktop View -->
+        <div class="card overflow-x-auto desktop-table" style="margin-bottom: 1.5rem;">
+          <table id="attendanceTable">
+            <thead>
+              <tr>
+                <th>Course Code</th>
+                <th>Course Name</th>
+                <th>Total Classes</th>
+                <th>Classes Attended</th>
+                <th>% Attendance</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>IMS565</td><td>INFORMATION SYSTEM PROJECT MANAGEMENT</td><td>14</td><td>12</td><td>85%</td></tr>
+              <tr><td>IMS566</td><td>ENGLISH FOR PROFESSIONAL CORRESPONDENCE</td><td>14</td><td>13</td><td>92%</td></tr>
+              <tr><td>LCC501</td><td>INTRODUCTORY ARABIC (LEVEL II)</td><td>14</td><td>11</td><td>78%</td></tr>
+              <tr><td>TAC451</td><td>USER EXPERIENCE DESIGN</td><td>14</td><td>11</td><td>75%</td></tr>
+              <tr><td>CTU554</td><td>VALUES AND CIVILIZATION II</td><td>12</td><td>8</td><td>70%</td></tr>
+              <tr><td>IMS560</td><td>ADVANCED DATABASE MANAGEMENT SYSTEM</td><td>14</td><td>13</td><td>93%</td></tr>
+              <tr><td>IMS561</td><td>WEB PUBLISHING</td><td>12</td><td>12</td><td>100%</td></tr>
+              <tr><td>IMS566</td><td>ADVANCED WEB DESIGN & CMS</td><td>12</td><td>10</td><td>80%</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Mobile Card View for Attendance -->
+        <div class="mobile-attendance card" style="margin-bottom: 1.5rem;">
+          <div class="attendance-item">
+            <div class="attendance-item-header">IMS565</div>
+            <div class="attendance-item-title">INFORMATION SYSTEM PROJECT MANAGEMENT</div>
+            <div class="attendance-item-details">
+              <div class="attendance-detail">
+                <div class="attendance-detail-label">Total</div>
+                <div class="attendance-detail-value">14</div>
+              </div>
+              <div class="attendance-detail">
+                <div class="attendance-detail-label">Attended</div>
+                <div class="attendance-detail-value">12</div>
+              </div>
+              <div class="attendance-detail">
+                <div class="attendance-detail-label">Absent</div>
+                <div class="attendance-detail-value">2</div>
+              </div>
+            </div>
+            <div class="attendance-percentage">
+              <div class="attendance-percentage-value">85%</div>
+              <div class="attendance-percentage-label">Attendance Rate</div>
+            </div>
+          </div>
+
+          <div class="attendance-item">
+            <div class="attendance-item-header">IMS566</div>
+            <div class="attendance-item-title">ENGLISH FOR PROFESSIONAL CORRESPONDENCE</div>
+            <div class="attendance-item-details">
+              <div class="attendance-detail">
+                <div class="attendance-detail-label">Total</div>
+                <div class="attendance-detail-value">14</div>
+              </div>
+              <div class="attendance-detail">
+                <div class="attendance-detail-label">Attended</div>
+                <div class="attendance-detail-value">13</div>
+              </div>
+              <div class="attendance-detail">
+                <div class="attendance-detail-label">Absent</div>
+                <div class="attendance-detail-value">1</div>
+              </div>
+            </div>
+            <div class="attendance-percentage">
+              <div class="attendance-percentage-value">92%</div>
+              <div class="attendance-percentage-label">Attendance Rate</div>
+            </div>
+          </div>
+
+          <div class="attendance-item">
+            <div class="attendance-item-header">LCC501</div>
+            <div class="attendance-item-title">INTRODUCTORY ARABIC (LEVEL II)</div>
+            <div class="attendance-item-details">
+              <div class="attendance-detail">
+                <div class="attendance-detail-label">Total</div>
+                <div class="attendance-detail-value">14</div>
+              </div>
+              <div class="attendance-detail">
+                <div class="attendance-detail-label">Attended</div>
+                <div class="attendance-detail-value">11</div>
+              </div>
+              <div class="attendance-detail">
+                <div class="attendance-detail-label">Absent</div>
+                <div class="attendance-detail-value">3</div>
+              </div>
+            </div>
+            <div class="attendance-percentage">
+              <div class="attendance-percentage-value">78%</div>
+              <div class="attendance-percentage-label">Attendance Rate</div>
+            </div>
+          </div>
+
+          <div class="attendance-item">
+            <div class="attendance-item-header">TAC451</div>
+            <div class="attendance-item-title">USER EXPERIENCE DESIGN</div>
+            <div class="attendance-item-details">
+              <div class="attendance-detail">
+                <div class="attendance-detail-label">Total</div>
+                <div class="attendance-detail-value">14</div>
+              </div>
+              <div class="attendance-detail">
+                <div class="attendance-detail-label">Attended</div>
+                <div class="attendance-detail-value">11</div>
+              </div>
+              <div class="attendance-detail">
+                <div class="attendance-detail-label">Absent</div>
+                <div class="attendance-detail-value">3</div>
+              </div>
+            </div>
+            <div class="attendance-percentage">
+              <div class="attendance-percentage-value">75%</div>
+              <div class="attendance-percentage-label">Attendance Rate</div>
+            </div>
+          </div>
+
+          <div class="attendance-item">
+            <div class="attendance-item-header">CTU554</div>
+            <div class="attendance-item-title">VALUES AND CIVILIZATION II</div>
+            <div class="attendance-item-details">
+              <div class="attendance-detail">
+                <div class="attendance-detail-label">Total</div>
+                <div class="attendance-detail-value">12</div>
+              </div>
+              <div class="attendance-detail">
+                <div class="attendance-detail-label">Attended</div>
+                <div class="attendance-detail-value">8</div>
+              </div>
+              <div class="attendance-detail">
+                <div class="attendance-detail-label">Absent</div>
+                <div class="attendance-detail-value">4</div>
+              </div>
+            </div>
+            <div class="attendance-percentage">
+              <div class="attendance-percentage-value">70%</div>
+              <div class="attendance-percentage-label">Attendance Rate</div>
+            </div>
+          </div>
+
+          <div class="attendance-item">
+            <div class="attendance-item-header">IMS560</div>
+            <div class="attendance-item-title">ADVANCED DATABASE MANAGEMENT SYSTEM</div>
+            <div class="attendance-item-details">
+              <div class="attendance-detail">
+                <div class="attendance-detail-label">Total</div>
+                <div class="attendance-detail-value">14</div>
+              </div>
+              <div class="attendance-detail">
+                <div class="attendance-detail-label">Attended</div>
+                <div class="attendance-detail-value">13</div>
+              </div>
+              <div class="attendance-detail">
+                <div class="attendance-detail-label">Absent</div>
+                <div class="attendance-detail-value">1</div>
+              </div>
+            </div>
+            <div class="attendance-percentage">
+              <div class="attendance-percentage-value">93%</div>
+              <div class="attendance-percentage-label">Attendance Rate</div>
+            </div>
+          </div>
+
+          <div class="attendance-item">
+            <div class="attendance-item-header">IMS561</div>
+            <div class="attendance-item-title">WEB PUBLISHING</div>
+            <div class="attendance-item-details">
+              <div class="attendance-detail">
+                <div class="attendance-detail-label">Total</div>
+                <div class="attendance-detail-value">12</div>
+              </div>
+              <div class="attendance-detail">
+                <div class="attendance-detail-label">Attended</div>
+                <div class="attendance-detail-value">12</div>
+              </div>
+              <div class="attendance-detail">
+                <div class="attendance-detail-label">Absent</div>
+                <div class="attendance-detail-value">0</div>
+              </div>
+            </div>
+            <div class="attendance-percentage">
+              <div class="attendance-percentage-value">100%</div>
+              <div class="attendance-percentage-label">Attendance Rate</div>
+            </div>
+          </div>
+
+          <div class="attendance-item">
+            <div class="attendance-item-header">IMS566</div>
+            <div class="attendance-item-title">ADVANCED WEB DESIGN & CMS</div>
+            <div class="attendance-item-details">
+              <div class="attendance-detail">
+                <div class="attendance-detail-label">Total</div>
+                <div class="attendance-detail-value">12</div>
+              </div>
+              <div class="attendance-detail">
+                <div class="attendance-detail-label">Attended</div>
+                <div class="attendance-detail-value">10</div>
+              </div>
+              <div class="attendance-detail">
+                <div class="attendance-detail-label">Absent</div>
+                <div class="attendance-detail-value">2</div>
+              </div>
+            </div>
+            <div class="attendance-percentage">
+              <div class="attendance-percentage-value">80%</div>
+              <div class="attendance-percentage-label">Attendance Rate</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Attendance Chart -->
+<div class="card mx-auto" style="max-width: 800px;">
+  <h2 class="text-xl font-bold text-purple-700 mb-4 text-center">Attendance Chart</h2>
+  <div class="chart-container mx-auto">
+    <canvas id="attendanceChart"></canvas>
+  </div>
+</div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white" style="position: relative; margin-top: 3rem;">
+      <div style="position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg, rgba(107,114,128,0.8), rgba(156,163,175,0.8), rgba(107,114,128,0.8)); filter: blur(6px); opacity: 0.9;"></div>
+      <div class="container" style="padding-top: 2.5rem; padding-bottom: 2.5rem;">
+        <div class="footer-grid">
+          <!-- QUICK LINKS -->
+          <div>
+            <h3 class="font-semibold mb-3 text-purple-400">QUICK LINKS</h3>
+            <ul class="space-y-2 text-gray-200" style="font-size: 0.875rem;">
+              <li><a href="https://www.mohe.gov.my/" target="_blank" class="hover:text-purple-400">Ministry of Higher Education</a></li>
+              <li><a href="https://hea.uitm.edu.my/index.php/calendars/academic-calendar" target="_blank" class="hover:text-purple-400">Academic Calendar</a></li>
+              <li><a href="https://simsweb.uitm.edu.my/sportal_app/graduat_search/index.htm" target="_blank" class="hover:text-purple-400">Graduate Quick Search</a></li>
+              <li><a href="https://library.uitm.edu.my/" target="_blank" class="hover:text-purple-400">Library</a></li>
+              <li><a href="https://news.uitm.edu.my/" target="_blank" class="hover:text-purple-400">News</a></li>
+              <li><a href="https://www.uitmholdings.com.my/" target="_blank" class="hover:text-purple-400">UiTM Holdings</a></li>
+              <li><a href="https://wifi.uitm.edu.my/" target="_blank" class="hover:text-purple-400">WiFi UiTM</a></li>
+            </ul>
+          </div>
+
+          <!-- CONTACT US -->
+          <div>
+            <h3 class="font-semibold mb-3 text-purple-400">CONTACT US</h3>
+            <ul class="space-y-1 text-gray-200" style="font-size: 0.875rem;">
+              <li>Student Records and Convocation Division (BRPK)</li>
+              <li>Registrar's Office</li>
+              <li>Level 3, Menara Sultan Abdul Aziz Shah (SAAS)</li>
+              <li>Universiti Teknologi MARA (UiTM)</li>
+              <li>40450 Shah Alam, Selangor Darul Ehsan</li>
+              <li>Malaysia</li>
+              <li>Tel: <a href="tel:+60355543131" class="hover:text-purple-400">+603-5554 3131</a></li>
+            </ul>
+            <div style="margin-top: 1rem; display: flex; gap: 1rem; font-size: 1.25rem;">
+              <a href="https://www.facebook.com/uitmkonvo" target="_blank" class="hover:text-purple-400"><i class="fab fa-facebook-f"></i></a>
+              <a href="https://twitter.com/UiTMOfficial" target="_blank" class="hover:text-purple-400"><i class="fab fa-twitter"></i></a>
+              <a href="https://www.youtube.com/@UiTMOfficial" target="_blank" class="hover:text-purple-400"><i class="fab fa-youtube"></i></a>
+              <a href="https://www.google.com/maps/place/Universiti+Teknologi+MARA/@3.067063,101.501676,18z" target="_blank" class="hover:text-purple-400"><i class="fas fa-map-marker-alt"></i></a>
+            </div>
+          </div>
+
+          <!-- ABOUT -->
+          <div>
+            <h3 class="font-semibold mb-3 text-purple-400">ABOUT UiTM</h3>
+            <p class="text-gray-200" style="font-size: 0.875rem;">
+              Universiti Teknologi MARA (UiTM) is Malaysia's largest higher education institution, committed to excellence in education, research, and community development.
+            </p>
+          </div>
+
+          <!-- SUPPORT -->
+          <div>
+            <h3 class="font-semibold mb-3 text-purple-400">SUPPORT</h3>
+            <ul class="space-y-2 text-gray-200" style="font-size: 0.875rem;">
+              <li><a href="https://www.uitm.edu.my/contact" target="_blank" class="hover:text-purple-400">Contact Support</a></li>
+              <li><a href="https://pengambilan.uitm.edu.my/index.php/faq" target="_blank" class="hover:text-purple-400">FAQ</a></li>
+              <li><a href="https://www.uitm.edu.my/privacy" target="_blank" class="hover:text-purple-400">Privacy Policy</a></li>
+              <li><a href="https://www.uitm.edu.my/terms" target="_blank" class="hover:text-purple-400">Terms & Conditions</a></li>
+            </ul>
+          </div>
+        </div>
+        <div style="margin-top: 1.5rem; padding-bottom: 1.5rem; text-align: center; color: #9ca3af; font-size: 0.875rem;">
+          © 2025 Student Portal - UiTM. All rights reserved.
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    // Mobile Menu Toggle
+    const mobileBtn = document.getElementById('mobileMenuBtn');
+    const mobileMenu = document.getElementById('mobileMenu');
+    mobileBtn.addEventListener('click', () => {
+      mobileMenu.classList.toggle('hidden');
+    });
+
+    // Dark Mode Toggle
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    const darkModeToggleMobile = document.getElementById('darkModeToggleMobile');
+    const modeLabel = document.getElementById('modeLabel');
+    const modeLabelMobile = document.getElementById('modeLabelMobile');
+
+    // Check saved preference
+    const isDarkMode = localStorage.getItem('darkMode') === 'true';
+    if (isDarkMode) {
+      document.body.classList.add('dark-mode');
+      darkModeToggle.checked = true;
+      darkModeToggleMobile.checked = true;
+      modeLabel.innerHTML = '<i class="fas fa-moon text-purple-400"></i>';
+      modeLabelMobile.innerHTML = '<i class="fas fa-moon text-purple-400"></i>';
+    }
+
+    // Toggle dark mode function
+    function toggleDarkMode() {
+      document.body.classList.toggle('dark-mode');
+      const isDark = document.body.classList.contains('dark-mode');
+
+      // Sync both toggles
+      darkModeToggle.checked = isDark;
+      darkModeToggleMobile.checked = isDark;
+
+      // Update icons
+      if (isDark) {
+        modeLabel.innerHTML = '<i class="fas fa-moon text-purple-400"></i>';
+        modeLabelMobile.innerHTML = '<i class="fas fa-moon text-purple-400"></i>';
+      } else {
+        modeLabel.innerHTML = '<i class="fas fa-sun text-yellow-500"></i>';
+        modeLabelMobile.innerHTML = '<i class="fas fa-sun text-yellow-500"></i>';
+      }
+
+      // Save preference
+      localStorage.setItem('darkMode', isDark);
+    }
+
+    darkModeToggle.addEventListener('change', toggleDarkMode);
+    darkModeToggleMobile.addEventListener('change', toggleDarkMode);
+
+    // Chart Script
+    const tableRows = document.querySelectorAll('#attendanceTable tbody tr');
+    const labels = [];
+    const data = [];
+
+    tableRows.forEach(row => {
+      const cells = row.querySelectorAll('td');
+      labels.push(cells[0].innerText);
+      data.push(parseInt(cells[4].innerText.replace('%','')));
+    });
+
+    const ctx = document.getElementById('attendanceChart').getContext('2d');
+    const gradient = ctx.createLinearGradient(0,0,0,400);
+    gradient.addColorStop(0,'rgba(124,58,237,0.9)');
+    gradient.addColorStop(1,'rgba(191,132,248,0.6)');
+
+    new Chart(ctx,{
+      type:'bar',
+      data:{
+        labels: labels,
+        datasets:[{
+          label: '% Attendance',
+          data: data,
+          backgroundColor: gradient,
+          borderRadius: 6,
+          maxBarThickness:50
+        }]
+      },
+      options:{
+        responsive:true,
+        maintainAspectRatio:true,
+        aspectRatio: 2,
+        plugins:{
+          legend:{ display:false },
+          datalabels:{
+            anchor:'end',
+            align:'end',
+            offset:-6,
+            color:'#4b2cb2',
+            font:{ weight:'bold', size:14 },
+            formatter:value=>value+'%'
+          }
+        },
+        scales:{
+          x:{ grid:{ display:false }},
+          y:{ beginAtZero:true, max:100, ticks:{ stepSize:10 }}
+        }
+      },
+      plugins:[ChartDataLabels]
+    });
+  </script>
+
+</body>
+</html> 

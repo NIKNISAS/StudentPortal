@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grades</title>
+  <link rel="icon" type="image/png" href="images/uitmlogo.png" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    /* ========================
+       FULL RESET - START FRESH
+       ======================== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      height: 100%;
+      overflow-y: scroll;
+      overflow-x: hidden;
+    }
+
+    body {
+      min-height: 100%;
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #e0d7f8 0%, #f0f4ff 50%, #e6f0ff 100%);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    /* Dark mode styles */
+    body.dark-mode {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      color: #e0e0e0;
+    }
+    body.dark-mode .navbar,
+    body.dark-mode .navbar-mobile { background: #1f2937; }
+    body.dark-mode .navbar span,
+    body.dark-mode .navbar-mobile span { color: #ffffff !important; }
+    body.dark-mode .card { background: rgba(31, 41, 55, 0.8); color: #e0e0e0; }
+    body.dark-mode .card h2,
+    body.dark-mode .card p { color: #ffffff; }
+    body.dark-mode .text-purple-700,
+    body.dark-mode .text-purple-600,
+    body.dark-mode .text-gray-700,
+    body.dark-mode .text-gray-600 { color: #ffffff !important; }
+    body.dark-mode th { background: rgba(124,58,237,0.3); color: #c084fc; }
+    body.dark-mode td { color: #e0e0e0; }
+    body.dark-mode .bg-purple-50 { background: rgba(124,58,237,0.1) !important; }
+    body.dark-mode .nav-link { color: #d1d5db; }
+    body.dark-mode .nav-link:hover { background-color: rgba(124,58,237,0.2); color: #c084fc; }
+    body.dark-mode .nav-link.active { background-color: rgba(124,58,237,0.3); color: #c084fc; }
+    body.dark-mode #mobileMenu { background: #1f2937; }
+    body.dark-mode #mobileMenu .text-gray-700 { color: #d1d5db !important; }
+    body.dark-mode #mobileMenu .border-gray-200 { border-color: #374151; }
+    body.dark-mode footer { background: #111827; }
+    body.dark-mode h1 { color: #c084fc !important; }
+    body.dark-mode .grade-item { background: rgba(31, 41, 55, 0.5); }
+    body.dark-mode .grade-item-header { color: #c084fc; }
+
+    /* Decorative shapes */
+    .decor-shape {
+      position: fixed;
+      filter: blur(60px) saturate(120%);
+      opacity: 0.4;
+      z-index: 0;
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    .decor-shape1 {
+      width: 420px;
+      height: 420px;
+      top: -80px;
+      left: -120px;
+      background: #c084fc;
+    }
+    .decor-shape2 {
+      width: 360px;
+      height: 360px;
+      top: 80px;
+      right: -140px;
+      background: #fad660;
+      opacity: 0.35;
+    }
+    .decor-shape3 {
+      width: 220px;
+      height: 220px;
+      bottom: -60px;
+      left: 20%;
+      background: #fb7171;
+      opacity: 0.25;
+    }
+
+    /* Cards */
+    .card {
+      background: rgba(255,255,255,0.75);
+      backdrop-filter: blur(12px) saturate(120%);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+      transition: transform 0.2s, box-shadow 0.2s;
+      z-index: 10;
+      position: relative;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 25px rgba(0,0,0,0.15);
+    }
+
+    /* Navbar */
+    .navbar {
+      z-index: 20;
+      position: relative;
+      box-shadow: 0 6px 20px rgba(124,58,237,0.15);
+    }
+    .navbar::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, rgba(124,58,237,0.6), rgba(191,132,248,0.6));
+      filter: blur(8px);
+      border-radius: 2px;
+    }
+
+    /* Nav links */
+    .nav-link {
+      position: relative;
+      padding: 6px 14px;
+      border-radius: 12px;
+      font-weight: 700;
+      color: #4a5568;
+      transition: all 0.3s ease;
+      display: inline-block;
+      text-decoration: none;
+    }
+    .nav-link:hover {
+      background-color: rgba(124,58,237,0.1);
+      color: #7c3aed;
+      box-shadow: 0 2px 8px rgba(124,58,237,0.3);
+    }
+    .nav-link.active {
+      background-color: rgba(124,58,237,0.15);
+      color: #7c3aed;
+      font-weight: 700;
+      box-shadow: 0 0 12px rgba(124,58,237,0.4);
+    }
+    .nav-link.active::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      bottom: -3px;
+      width: 100%;
+      height: 3px;
+      background: #7c3aed;
+      border-radius: 2px;
+      box-shadow: 0 0 8px rgba(124,58,237,0.5);
+    }
+    .nav-link.logout {
+      color: #ef4444;
+    }
+    .nav-link.logout:hover {
+      background-color: rgba(239,68,68,0.1);
+      color: #ef4444;
+      box-shadow: 0 2px 8px rgba(239,68,68,0.3);
+    }
+
+    /* Mobile navbar */
+    .navbar-mobile {
+      z-index: 30;
+    }
+    #mobileMenu a {
+      padding: 8px 12px;
+      border-radius: 10px;
+    }
+
+    /* Main container */
+    .page-container {
+      flex: 1 0 auto;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      width: 100%;
+    }
+
+    main {
+      flex: 1 1 auto;
+      padding: 2rem 1rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    @media (min-width: 640px) {
+      main {
+        padding: 2rem 1.5rem;
+      }
+    }
+
+    /* Footer */
+    footer {
+      flex-shrink: 0;
+      margin-top: auto;
+      width: 100%;
+    }
+
+    /* Container */
+    .container {
+      max-width: 1280px;
+      margin-left: auto;
+      margin-right: auto;
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+
+    @media (min-width: 640px) {
+      .container {
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+      }
+    }
+
+    /* Table styles - Desktop only */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 0.5rem;
+      text-align: center;
+      font-size: 0.8rem;
+    }
+    th {
+      background: #ede6ff;
+      color: #7c3aed;
+      font-weight: 600;
+    }
+
+    @media (min-width: 768px) {
+      th, td {
+        padding: 0.75rem;
+        font-size: 1rem;
+      }
+    }
+
+    /* Hide table on mobile */
+    @media (max-width: 767px) {
+      .desktop-table {
+        display: none;
+      }
+      
+      main {
+        padding-top: 80px !important;
+      }
+    }
+
+    /* Mobile card view for grades */
+    .mobile-grades {
+      display: none;
+    }
+
+    @media (max-width: 767px) {
+      .mobile-grades {
+        display: block;
+      }
+    }
+
+    .grade-item {
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 12px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .grade-item-header {
+      font-weight: 700;
+      color: #7c3aed;
+      font-size: 0.875rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .grade-item-title {
+      font-weight: 600;
+      font-size: 0.95rem;
+      margin-bottom: 0.75rem;
+      color: #374151;
+    }
+
+    .grade-item-details {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.5rem;
+      text-align: center;
+    }
+
+    .grade-detail {
+      background: rgba(124, 58, 237, 0.05);
+      padding: 0.5rem;
+      border-radius: 8px;
+    }
+
+    .grade-detail-label {
+      font-size: 0.75rem;
+      color: #6b7280;
+      margin-bottom: 0.25rem;
+    }
+
+    .grade-detail-value {
+      font-weight: 700;
+      font-size: 1rem;
+      color: #7c3aed;
+    }
+
+    /* Chart container styles */
+    .chart-container {
+      position: relative;
+      width: 100%;
+      height: auto;
+      min-height: 300px;
+    }
+
+    @media (max-width: 767px) {
+      .chart-container {
+        min-height: 250px;
+      }
+    }
+
+    @media (min-width: 1024px) {
+      .chart-container {
+        min-height: 500px;
+      }
+    }
+
+    /* Footer grid */
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (min-width: 640px) {
+      .footer-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (min-width: 768px) {
+      .footer-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Decorative shapes -->
+  <div class="decor-shape decor-shape1"></div>
+  <div class="decor-shape decor-shape2"></div>
+  <div class="decor-shape decor-shape3"></div>
+
+  <!-- MOBILE HEADER -->
+  <nav class="navbar-mobile bg-white py-3 fixed top-0 left-0 right-0 shadow-md md:hidden">
+    <div class="flex items-center justify-between px-4">
+      <div class="flex items-center gap-2">
+        <img src="images/uitmlogo.png" alt="UITM Logo" class="w-9 h-9 rounded-full" />
+        <span class="font-bold text-purple-700 text-sm sm:text-base whitespace-nowrap">Student Portal</span>
+      </div>
+      <button id="mobileMenuBtn" class="text-purple-700 focus:outline-none p-2">
+        <i class="fas fa-bars fa-lg"></i>
+      </button>
+    </div>
+  </nav>
+
+  <!-- MOBILE MENU -->
+  <div id="mobileMenu" class="fixed top-[60px] left-0 right-0 bg-white shadow-md hidden flex-col space-y-1 px-4 py-4 md:hidden z-40">
+    <a href="dashboard.html" class="nav-link block">Dashboard</a>
+    <a href="courses.html" class="nav-link block">Courses</a>
+    <a href="grades.html" class="nav-link active block">Grades</a>
+    <a href="assignment.html" class="nav-link block">Assignments</a>
+    <a href="attendance.html" class="nav-link block">Attendance</a>
+    <a href="profile.html" class="nav-link block">Profile</a>
+    <a href="index.html" class="nav-link logout block">Logout</a>
+    <div class="flex items-center justify-between pt-2 border-t border-gray-200">
+      <span class="text-sm font-medium text-gray-700">Dark Mode</span>
+      <label class="relative inline-flex items-center cursor-pointer">
+        <input type="checkbox" id="darkModeToggleMobile" class="sr-only peer">
+        <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+        <span class="ml-2 text-sm" id="modeLabelMobile">
+          <i class="fas fa-sun text-yellow-500"></i>
+        </span>
+      </label>
+    </div>
+  </div>
+
+  <!-- DESKTOP HEADER -->
+  <nav class="navbar bg-white px-6 py-4 justify-between items-center rounded-b-2xl relative hidden md:flex">
+    <div class="flex items-center space-x-4">
+      <img src="images/uitmlogo.png" alt="UITM Logo" class="w-10 h-10 rounded-full">
+      <span class="font-bold text-lg text-purple-700">Student Portal</span>
+    </div>
+    <div class="flex space-x-4 items-center">
+      <a href="dashboard.html" class="nav-link">Dashboard</a>
+      <a href="courses.html" class="nav-link">Courses</a>
+      <a href="grades.html" class="nav-link active">Grades</a>
+      <a href="assignment.html" class="nav-link">Assignments</a>
+      <a href="attendance.html" class="nav-link">Attendance</a>
+      <a href="profile.html" class="nav-link">Profile</a>
+      <a href="index.html" class="nav-link logout">Logout</a>
+      <div class="flex items-center">
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" id="darkModeToggle" class="sr-only peer">
+          <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+          <span class="ml-2 text-sm font-medium text-gray-700" id="modeLabel">
+            <i class="fas fa-sun text-yellow-500"></i>
+          </span>
+        </label>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Page Container -->
+  <div class="page-container">
+    <!-- Main Content -->
+    <main style="padding-top: 2rem;">
+      <div class="container">
+        <!-- Page Header -->
+        <div style="margin-bottom: 1.5rem; position: relative; z-index: 10;">
+          <h1 class="text-3xl font-bold text-purple-700">Academic Grades</h1>
+        </div>
+
+        <!-- CGPA Card -->
+        <div class="card text-center" style="margin-bottom: 1.5rem;">
+          <h2 class="text-2xl font-bold text-purple-700">Current CGPA</h2>
+          <p class="text-5xl font-extrabold text-purple-600 mt-3">3.74</p>
+          <p class="text-gray-600 mt-1">Excellent academic progress</p>
+        </div>
+
+        <!-- Grades Table - Desktop View -->
+        <div class="card overflow-x-auto desktop-table" style="margin-bottom: 1.5rem;">
+          <table class="w-full">
+            <thead>
+              <tr>
+                <th>Course Code</th>
+                <th>Course Name</th>
+                <th>Marks</th>
+                <th>Grade</th>
+                <th>Grade Point</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>IMS565</td><td>INFORMATION SYSTEM PROJECT MANAGEMENT</td><td>85</td><td>A</td><td>4.00</td></tr>
+              <tr class="bg-purple-50"><td>IMS566</td><td>ENGLISH FOR PROFESSIONAL CORRESPONDENCE</td><td>78</td><td>B+</td><td>3.30</td></tr>
+              <tr><td>LCC501</td><td>INTRODUCTORY ARABIC (LEVEL II)</td><td>74</td><td>B</td><td>3.00</td></tr>
+              <tr class="bg-purple-50"><td>TAC451</td><td>USER EXPERIENCE DESIGN</td><td>92</td><td>A</td><td>4.00</td></tr>
+              <tr><td>CTU554</td><td>VALUES AND CIVILIZATION II</td><td>66</td><td>C+</td><td>2.30</td></tr>
+              <tr class="bg-purple-50"><td>IMS560</td><td>ADVANCED DATABASE MANAGEMENT SYSTEM</td><td>81</td><td>A-</td><td>3.70</td></tr>
+              <tr><td>IMS561</td><td>WEB PUBLISHING</td><td>88</td><td>A</td><td>4.00</td></tr>
+              <tr class="bg-purple-50"><td>IMS566</td><td>ADVANCED WEB DESIGN DEVELOPMENT & CMS</td><td>79</td><td>B+</td><td>3.30</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Mobile Card View for Grades -->
+        <div class="mobile-grades card" style="margin-bottom: 1.5rem;">
+          <div class="grade-item">
+            <div class="grade-item-header">IMS565</div>
+            <div class="grade-item-title">INFORMATION SYSTEM PROJECT MANAGEMENT</div>
+            <div class="grade-item-details">
+              <div class="grade-detail">
+                <div class="grade-detail-label">Marks</div>
+                <div class="grade-detail-value">85</div>
+              </div>
+              <div class="grade-detail">
+                <div class="grade-detail-label">Grade</div>
+                <div class="grade-detail-value">A</div>
+              </div>
+              <div class="grade-detail">
+                <div class="grade-detail-label">GP</div>
+                <div class="grade-detail-value">4.00</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="grade-item">
+            <div class="grade-item-header">IMS566</div>
+            <div class="grade-item-title">ENGLISH FOR PROFESSIONAL CORRESPONDENCE</div>
+            <div class="grade-item-details">
+              <div class="grade-detail">
+                <div class="grade-detail-label">Marks</div>
+                <div class="grade-detail-value">78</div>
+              </div>
+              <div class="grade-detail">
+                <div class="grade-detail-label">Grade</div>
+                <div class="grade-detail-value">B+</div>
+              </div>
+              <div class="grade-detail">
+                <div class="grade-detail-label">GP</div>
+                <div class="grade-detail-value">3.30</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="grade-item">
+            <div class="grade-item-header">LCC501</div>
+            <div class="grade-item-title">INTRODUCTORY ARABIC (LEVEL II)</div>
+            <div class="grade-item-details">
+              <div class="grade-detail">
+                <div class="grade-detail-label">Marks</div>
+                <div class="grade-detail-value">74</div>
+              </div>
+              <div class="grade-detail">
+                <div class="grade-detail-label">Grade</div>
+                <div class="grade-detail-value">B</div>
+              </div>
+              <div class="grade-detail">
+                <div class="grade-detail-label">GP</div>
+                <div class="grade-detail-value">3.00</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="grade-item">
+            <div class="grade-item-header">TAC451</div>
+            <div class="grade-item-title">USER EXPERIENCE DESIGN</div>
+            <div class="grade-item-details">
+              <div class="grade-detail">
+                <div class="grade-detail-label">Marks</div>
+                <div class="grade-detail-value">92</div>
+              </div>
+              <div class="grade-detail">
+                <div class="grade-detail-label">Grade</div>
+                <div class="grade-detail-value">A</div>
+              </div>
+              <div class="grade-detail">
+                <div class="grade-detail-label">GP</div>
+                <div class="grade-detail-value">4.00</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="grade-item">
+            <div class="grade-item-header">CTU554</div>
+            <div class="grade-item-title">VALUES AND CIVILIZATION II</div>
+            <div class="grade-item-details">
+              <div class="grade-detail">
+                <div class="grade-detail-label">Marks</div>
+                <div class="grade-detail-value">66</div>
+              </div>
+              <div class="grade-detail">
+                <div class="grade-detail-label">Grade</div>
+                <div class="grade-detail-value">C+</div>
+              </div>
+              <div class="grade-detail">
+                <div class="grade-detail-label">GP</div>
+                <div class="grade-detail-value">2.30</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="grade-item">
+            <div class="grade-item-header">IMS560</div>
+            <div class="grade-item-title">ADVANCED DATABASE MANAGEMENT SYSTEM</div>
+            <div class="grade-item-details">
+              <div class="grade-detail">
+                <div class="grade-detail-label">Marks</div>
+                <div class="grade-detail-value">81</div>
+              </div>
+              <div class="grade-detail">
+                <div class="grade-detail-label">Grade</div>
+                <div class="grade-detail-value">A-</div>
+              </div>
+              <div class="grade-detail">
+                <div class="grade-detail-label">GP</div>
+                <div class="grade-detail-value">3.70</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="grade-item">
+            <div class="grade-item-header">IMS561</div>
+            <div class="grade-item-title">WEB PUBLISHING</div>
+            <div class="grade-item-details">
+              <div class="grade-detail">
+                <div class="grade-detail-label">Marks</div>
+                <div class="grade-detail-value">88</div>
+              </div>
+              <div class="grade-detail">
+                <div class="grade-detail-label">Grade</div>
+                <div class="grade-detail-value">A</div>
+              </div>
+              <div class="grade-detail">
+                <div class="grade-detail-label">GP</div>
+                <div class="grade-detail-value">4.00</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="grade-item">
+            <div class="grade-item-header">IMS566</div>
+            <div class="grade-item-title">ADVANCED WEB DESIGN DEVELOPMENT & CMS</div>
+            <div class="grade-item-details">
+              <div class="grade-detail">
+                <div class="grade-detail-label">Marks</div>
+                <div class="grade-detail-value">79</div>
+              </div>
+              <div class="grade-detail">
+                <div class="grade-detail-label">Grade</div>
+                <div class="grade-detail-value">B+</div>
+              </div>
+              <div class="grade-detail">
+                <div class="grade-detail-label">GP</div>
+                <div class="grade-detail-value">3.30</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chart Card -->
+        <div class="card">
+          <h2 class="text-xl font-bold text-purple-700 mb-4">Marks & Grade Point Chart</h2>
+          <div class="flex flex-col lg:flex-row gap-6 w-full">
+
+            <!-- Chart -->
+            <div class="w-full lg:w-2/3 chart-container">
+              <canvas id="gradeChart"></canvas>
+            </div>
+
+            <!-- Badges -->
+            <div class="w-full lg:w-1/3 flex flex-col gap-3 justify-center">
+              <div class="bg-purple-200 text-purple-900 p-3 rounded-lg font-semibold text-center">A (4.00) – Excellent</div>
+              <div class="bg-purple-100 text-purple-800 p-3 rounded-lg font-semibold text-center">A- (3.70) – Very Good</div>
+              <div class="bg-yellow-100 text-yellow-700 p-3 rounded-lg font-semibold text-center">B+ (3.30) – Good</div>
+              <div class="bg-blue-100 text-blue-700 p-3 rounded-lg font-semibold text-center">B (3.00) – Satisfactory</div>
+              <div class="bg-red-100 text-red-700 p-3 rounded-lg font-semibold text-center">C+ (2.30) – Pass</div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white" style="position: relative; margin-top: 3rem;">
+      <div style="position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg, rgba(107,114,128,0.8), rgba(156,163,175,0.8), rgba(107,114,128,0.8)); filter: blur(6px); opacity: 0.9;"></div>
+      <div class="container" style="padding-top: 2.5rem; padding-bottom: 2.5rem;">
+        <div class="footer-grid">
+          <!-- QUICK LINKS -->
+          <div>
+            <h3 class="font-semibold mb-3 text-purple-400">QUICK LINKS</h3>
+            <ul class="space-y-2 text-gray-200" style="font-size: 0.875rem;">
+              <li><a href="https://www.mohe.gov.my/" target="_blank" class="hover:text-purple-400">Ministry of Higher Education</a></li>
+              <li><a href="https://hea.uitm.edu.my/index.php/calendars/academic-calendar" target="_blank" class="hover:text-purple-400">Academic Calendar</a></li>
+              <li><a href="https://simsweb.uitm.edu.my/sportal_app/graduat_search/index.htm" target="_blank" class="hover:text-purple-400">Graduate Quick Search</a></li>
+              <li><a href="https://library.uitm.edu.my/" target="_blank" class="hover:text-purple-400">Library</a></li>
+              <li><a href="https://news.uitm.edu.my/" target="_blank" class="hover:text-purple-400">News</a></li>
+              <li><a href="https://www.uitmholdings.com.my/" target="_blank" class="hover:text-purple-400">UiTM Holdings</a></li>
+              <li><a href="https://wifi.uitm.edu.my/" target="_blank" class="hover:text-purple-400">WiFi UiTM</a></li>
+            </ul>
+          </div>
+          <!-- CONTACT US -->
+          <div>
+            <h3 class="font-semibold mb-3 text-purple-400">CONTACT US</h3>
+            <ul class="space-y-1 text-gray-200" style="font-size: 0.875rem;">
+              <li>Student Records and Convocation Division (BRPK)</li>
+              <li>Registrar's Office</li>
+              <li>Level 3, Menara Sultan Abdul Aziz Shah (SAAS)</li>
+              <li>Universiti Teknologi MARA (UiTM)</li>
+              <li>40450 Shah Alam, Selangor Darul Ehsan</li>
+              <li>Malaysia</li>
+              <li>Tel: <a href="tel:+60355543131" class="hover:text-purple-400">+603-5554 3131</a></li>
+            </ul>
+            <div style="margin-top: 1rem; display: flex; gap: 1rem; font-size: 1.25rem;">
+              <a href="https://www.facebook.com/uitmkonvo" target="_blank" class="hover:text-purple-400"><i class="fab fa-facebook-f"></i></a>
+              <a href="https://twitter.com/UiTMOfficial" target="_blank" class="hover:text-purple-400"><i class="fab fa-twitter"></i></a>
+              <a href="https://www.youtube.com/@UiTMOfficial" target="_blank" class="hover:text-purple-400"><i class="fab fa-youtube"></i></a>
+              <a href="https://www.google.com/maps/place/Universiti+Teknologi+MARA/@3.067063,101.501676,18z" target="_blank" class="hover:text-purple-400"><i class="fas fa-map-marker-alt"></i></a>
+            </div>
+          </div>
+
+          <!-- ABOUT -->
+          <div>
+            <h3 class="font-semibold mb-3 text-purple-400">ABOUT UiTM</h3>
+            <p class="text-gray-200" style="font-size: 0.875rem;">
+              Universiti Teknologi MARA (UiTM) is Malaysia's largest higher education institution, committed to excellence in education, research, and community development.
+            </p>
+          </div>
+
+          <!-- SUPPORT -->
+          <div>
+            <h3 class="font-semibold mb-3 text-purple-400">SUPPORT</h3>
+            <ul class="space-y-2 text-gray-200" style="font-size: 0.875rem;">
+              <li><a href="https://www.uitm.edu.my/contact" target="_blank" class="hover:text-purple-400">Contact Support</a></li>
+              <li><a href="https://pengambilan.uitm.edu.my/index.php/faq" target="_blank" class="hover:text-purple-400">FAQ</a></li>
+              <li><a href="https://www.uitm.edu.my/privacy" target="_blank" class="hover:text-purple-400">Privacy Policy</a></li>
+              <li><a href="https://www.uitm.edu.my/terms" target="_blank" class="hover:text-purple-400">Terms & Conditions</a></li>
+            </ul>
+          </div>
+        </div>
+        <div style="margin-top: 1.5rem; padding-bottom: 1.5rem; text-align: center; color: #9ca3af; font-size: 0.875rem;">
+          © 2025 Student Portal - UiTM. All rights reserved.
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    // Mobile Menu Toggle
+    const mobileBtn = document.getElementById('mobileMenuBtn');
+    const mobileMenu = document.getElementById('mobileMenu');
+    mobileBtn.addEventListener('click', () => {
+      mobileMenu.classList.toggle('hidden');
+    });
+
+    // Dark Mode Toggle
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    const darkModeToggleMobile = document.getElementById('darkModeToggleMobile');
+    const modeLabel = document.getElementById('modeLabel');
+    const modeLabelMobile = document.getElementById('modeLabelMobile');
+
+    // Check saved preference
+    const isDarkMode = localStorage.getItem('darkMode') === 'true';
+    if (isDarkMode) {
+      document.body.classList.add('dark-mode');
+      darkModeToggle.checked = true;
+      darkModeToggleMobile.checked = true;
+      modeLabel.innerHTML = '<i class="fas fa-moon text-purple-400"></i>';
+      modeLabelMobile.innerHTML = '<i class="fas fa-moon text-purple-400"></i>';
+    }
+
+    // Toggle dark mode function
+    function toggleDarkMode() {
+      document.body.classList.toggle('dark-mode');
+      const isDark = document.body.classList.contains('dark-mode');
+
+      // Sync both toggles
+      darkModeToggle.checked = isDark;
+      darkModeToggleMobile.checked = isDark;
+
+      // Update icons
+      if (isDark) {
+        modeLabel.innerHTML = '<i class="fas fa-moon text-purple-400"></i>';
+        modeLabelMobile.innerHTML = '<i class="fas fa-moon text-purple-400"></i>';
+      } else {
+        modeLabel.innerHTML = '<i class="fas fa-sun text-yellow-500"></i>';
+        modeLabelMobile.innerHTML = '<i class="fas fa-sun text-yellow-500"></i>';
+      }
+
+      // Save preference
+      localStorage.setItem('darkMode', isDark);
+    }
+
+    darkModeToggle.addEventListener('change', toggleDarkMode);
+    darkModeToggleMobile.addEventListener('change', toggleDarkMode);
+
+    // Chart Script
+    const ctx = document.getElementById('gradeChart').getContext('2d');
+    new Chart(ctx, {
+      data: {
+        labels: ['IMS565','IMS566','LCC501','TAC451','CTU554','IMS560','IMS561','IMS566'],
+        datasets: [
+          {
+            type: 'bar',
+            label: 'Marks',
+            data: [85,78,74,92,66,81,88,79],
+            backgroundColor: 'rgba(124,58,237,0.7)',
+            borderRadius: 8
+          },
+          {
+            type: 'line',
+            label: 'Grade Point',
+            data: [4.0,3.3,3.0,4.0,2.3,3.7,4.0,3.3],
+            borderColor: '#7c3aed',
+            borderWidth: 3,
+            tension: 0.4,
+            pointBackgroundColor: '#7c3aed',
+            pointRadius: 5
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        aspectRatio: 2,
+        scales: { 
+          y: { 
+            beginAtZero: true, 
+            max: 100 
+          } 
+        },
+        plugins: {
+          legend: {
+            display: true,
+            position: 'top'
+          }
+        }
+      }
+    });
+  </script>
+
+</body>
+</html>

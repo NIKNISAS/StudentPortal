@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Student Portal Login</title>
+<link rel="icon" type="image/png" href="images/uitmlogo.png" />
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+<script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+
+<style>
+  /* ===== HARD FIX HILANGKAN SCROLL BAR ===== */
+  html, body {
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+    margin: 0;
+    height: 100%;
+    font-family: Inter, sans-serif;
+    transition: background 0.4s, color 0.4s;
+    position: relative;
+  }
+  * { box-sizing: border-box; }
+
+  body { 
+    background: linear-gradient(135deg,#e0d7f8 0%,#f0f4ff 50%,#e6f0ff 100%);
+    color:#111; 
+  }
+
+  body.dark-mode { 
+    background:#0f172a; 
+    color:#f1f5f9; 
+  }
+
+  #particles-js { 
+    position:fixed; top:0; left:0; width:100%; height:100%; z-index:-1; 
+    max-width: 100% !important; overflow: hidden !important;
+  }
+
+  /* Decorative shapes */
+  .decor-shape { 
+    position:absolute; filter:blur(60px) saturate(120%); opacity:0.5; z-index:0; border-radius:50%; transition:opacity 0.4s; 
+    max-width: 100% !important; overflow-x: hidden !important;
+  }
+  body.dark-mode .decor-shape { opacity:0.2; }
+
+  .decor-shape1 { width:420px; height:420px; top:-80px; left:-120px; background:#c084fc; }
+  .decor-shape2 { width:360px; height:360px; top:80px; right:-80px; background:#fad660; }
+  .decor-shape3 { width:220px; height:220px; bottom:-60px; left:20%; background:#fb7171; }
+
+  @media (max-width: 768px) {
+    .decor-shape1 { width:250px; height:250px; top:-60px; left:-80px; }
+    .decor-shape2 { width:220px; height:220px; top:60px; right:-40px; }
+    .decor-shape3 { width:150px; height:150px; bottom:-40px; left:10%; }
+  }
+
+  /* Login card */
+  .login-card { 
+    backdrop-filter:blur(12px) saturate(120%); background:rgba(255,255,255,0.65); 
+    border:1px solid rgba(255,255,255,0.4); box-shadow:0 20px 40px rgba(2,6,23,0.08); transition: background 0.4s, border 0.4s; 
+  }
+  body.dark-mode .login-card { 
+    background: rgba(30,41,59,0.8); border-color: rgba(148,163,184,0.3); 
+  }
+  body.dark-mode .text-gray-800 { color:#f8fafc !important; }
+  body.dark-mode .text-gray-500 { color:#cbd5e1 !important; }
+  body.dark-mode .text-gray-700 { color:#f1f5f9 !important; }
+  body.dark-mode input { background:#1e293b; border-color:#475569; color:#f1f5f9; }
+
+  .reminder-bar { transition: background 0.4s, color 0.4s; }
+  body.dark-mode .reminder-bar { background: rgba(255,255,255,0.1); color:#f8fafc; }
+  @media (max-width: 768px) { .reminder-bar { display:none !important; } }
+
+  .animate-marquee { white-space: nowrap; animation: marquee 18s linear infinite; }
+  @keyframes marquee { 0%{transform:translateX(100%);} 100%{transform:translateX(-100%);} }
+
+  /* Dark Mode Switch */
+  .switch { position: relative; display: inline-block; width: 50px; height: 24px; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+  .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+  input:checked + .slider { background-color: #4f46e5; }
+  input:checked + .slider:before { transform: translateX(26px); }
+
+  .dark-label { font-size: 0.9rem; font-weight: 600; padding-left: 8px; }
+  body.dark-mode .dark-label { color: #fff; }
+
+  /* HIDE DARK MODE SWITCH ON MOBILE */
+  @media (max-width: 768px) { .darkmode-toggle-wrapper { display: none !important; } }
+</style>
+</head>
+
+<body class="min-h-screen flex flex-col justify-center items-center">
+
+<!-- Dark Mode Switch (hidden on mobile) -->
+<div class="darkmode-toggle-wrapper fixed top-4 right-4 z-50 flex items-center space-x-2 bg-white dark:bg-gray-700 p-1 rounded-full shadow-lg">
+  <label class="switch">
+    <input type="checkbox" id="darkModeSwitch" />
+    <span class="slider"></span>
+  </label>
+  <span class="dark-label">Dark Mode</span>
+</div>
+
+<div id="particles-js"></div>
+
+<div class="decor-shape decor-shape1"></div>
+<div class="decor-shape decor-shape2"></div>
+<div class="decor-shape decor-shape3"></div>
+
+<!-- Reminder (desktop only) -->
+<div class="reminder-bar w-full max-w-2xl mx-auto p-4 mt-6 rounded-xl shadow-lg bg-purple-100 relative overflow-hidden">
+  <div class="animate-marquee text-lg font-semibold text-gray-800">
+    Reminder : Students who have not yet settled their tuition fees, please ensure payment is made by December 30th.
+  </div>
+</div>
+
+<!-- Login Card -->
+<div class="login-card p-8 rounded-2xl w-full max-w-md border relative mt-6">
+  <div class="text-center mb-4">
+    <i class="fas fa-user-graduate text-4xl text-purple-600 mb-2"></i>
+    <h2 class="text-3xl font-bold text-gray-800">Student Portal Login</h2>
+    <p class="text-gray-500 text-sm mt-1">Enter your credentials to access your account</p>
+  </div>
+
+  <form id="loginForm">
+    <div class="mb-4">
+      <label for="username" class="block text-sm font-semibold text-gray-700 mb-2">
+        <i class="fas fa-user mr-2 text-purple-500"></i>Username
+      </label>
+      <input type="text" id="username" class="w-full border border-gray-300 p-3 rounded-lg" required>
+    </div>
+
+    <div class="mb-4">
+      <label for="password" class="block text-sm font-semibold text-gray-700 mb-2">
+        <i class="fas fa-lock mr-2 text-purple-500"></i>Password
+      </label>
+      <input type="password" id="password" class="w-full border border-gray-300 p-3 rounded-lg" required>
+    </div>
+
+    <button type="submit" id="loginBtn" class="ripple w-full bg-gradient-to-r from-purple-600 to-purple-700 text-white p-3 rounded-lg font-semibold hover:brightness-110">
+      <i class="fas fa-sign-in-alt mr-2"></i>Login
+    </button>
+
+    <div id="loader" class="hidden flex justify-center mt-3">
+      <div class="w-6 h-6 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+    </div>
+  </form>
+
+  <div id="errorMsg" class="text-red-500 mt-4 text-center text-sm font-medium"></div>
+  <p class="text-gray-500 text-xs text-center mt-6">© 2025 Student Portal - UiTM. All rights reserved.</p>
+</div>
+
+<script>
+  function initParticles() {
+    if (window.pJSDom && window.pJSDom.length > 0) {
+      window.pJSDom[0].pJS.fn.vendors.destroypJS();
+      window.pJSDom = [];
+    }
+    const isDark = document.body.classList.contains('dark-mode');
+    particlesJS("particles-js", {
+      "particles": {
+        "number": { "value": 80, "density": { "enable": true, "value_area": 800 } },
+        "color": { "value": ["#c084fc", "#fad660", "#fb7171", "#8e44ad", "#2980b9"] },
+        "shape": { "type": "circle" },
+        "line_linked": { 
+          "enable": true, 
+          "distance": 150, 
+          "color": isDark ? "#ffffff" : "#7c3aed", 
+          "opacity": 0.4, 
+          "width": 1 
+        },
+        "size": { "value": 4, "random": true },
+        "move": { "enable": true, "speed": 1 }
+      },
+      "interactivity": {
+        "detect_on": "canvas",
+        "events": { 
+          "onhover": { "enable": true, "mode": "repulse" }, 
+          "onclick": { "enable": true, "mode": "push" } 
+        },
+        "modes": { 
+          "repulse": { "distance": 100, "duration": 0.4 }, 
+          "push": { "particles_nb": 4 } 
+        }
+      },
+      "retina_detect": true
+    });
+  }
+
+  initParticles();
+
+  document.getElementById("darkModeSwitch").addEventListener("change", (e) => {
+    if (e.target.checked) document.body.classList.add("dark-mode");
+    else document.body.classList.remove("dark-mode");
+    initParticles();
+  });
+
+  const loginForm = document.getElementById("loginForm");
+  const username = document.getElementById("username");
+  const password = document.getElementById("password");
+  const loader = document.getElementById("loader");
+  const errorMsg = document.getElementById("errorMsg");
+
+  loginForm.addEventListener("submit", e => {
+    e.preventDefault();
+    loader.classList.remove("hidden");
+    setTimeout(() => {
+      if (username.value === "nisa" && password.value === "12345") {
+        window.location.href = "dashboard.html";
+      } else {
+        loader.classList.add("hidden");
+        errorMsg.textContent = "Invalid username or password";
+      }
+    }, 1000);
+  });
+</script>
+
+</body>
+</html>
